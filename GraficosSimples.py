@@ -3,7 +3,8 @@
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from matplotlib.widgets import Slider
+from matplotlib.widgets import Slider, TextBox
+import matplotlib.gridspec as gridspec
 import numpy as np
 
 plt.style.use('seaborn')
@@ -34,30 +35,15 @@ ax = fig.add_subplot(111)
 fig.subplots_adjust(bottom=0.2, top=0.65)
 
 #quantasCortantes = int(input('Quantas cortantes? '))
-
 # Create axes for sliders
-ax_Cortante = fig.add_axes([0.3, 0.70, 0.4, 0.05])
-ax_Cortante.spines['top'].set_visible(True)
-ax_Cortante.spines['right'].set_visible(True)
+gs = gridspec.GridSpec(2,2)
+gs.update(left=0.3, right=0.77, bottom=0.85, top=0.98, hspace=0.1)
+axes = [fig.add_subplot(gs[i,j]) for i,j in [[0,0],[0,1],[1,0],[1,1]]]
 
-ax_Forca = fig.add_axes([0.3, 0.77, 0.4, 0.05])
-ax_Forca.spines['top'].set_visible(True)
-ax_Forca.spines['right'].set_visible(True)
-
-ax_Cortante2 = fig.add_axes([0.3, 0.84, 0.4, 0.05])
-ax_Cortante2.spines['top'].set_visible(True)
-ax_Cortante2.spines['right'].set_visible(True)
-
-ax_Forca2 = fig.add_axes([0.3, 0.91, 0.4, 0.05])
-ax_Forca2.spines['top'].set_visible(True)
-ax_Forca2.spines['right'].set_visible(True)
-
-# Create sliders
-
-s_Cortante = Slider(ax=ax_Cortante, label=f'Posição {0}', valmin=0, valmax=10.0, valinit=5.0, valfmt=' %1.1f m', facecolor='#cc7000')
-s_Forca = Slider(ax=ax_Forca, label=f'Força {0}', valmin=1, valmax=5, valinit=5, valfmt=' %i N', facecolor='#cc7000')
-s_Cortante2 = Slider(ax=ax_Cortante2, label=f'Posição {1}', valmin=0, valmax=10.0, valinit=5.0, valfmt=' %1.1f m', facecolor='#cc7000')
-s_Forca2 = Slider(ax=ax_Forca2, label=f'Força {1}', valmin=1, valmax=5, valinit=5, valfmt=' %i N', facecolor='#cc7000')
+s_Cortante = TextBox(ax = axes[0], label='Posição 1', initial='5', color='.95', hovercolor='1', label_pad=0.01)
+s_Forca = TextBox(ax = axes[1], label='Força 0', initial='5', color='.95', hovercolor='1', label_pad=0.01)
+s_Cortante2 = TextBox(ax = axes[2], label='Posição 1', initial='5', color='.95', hovercolor='1', label_pad=0.01)
+s_Forca2 = TextBox(ax=axes[3], label='Força 1', initial='5', color='.95', hovercolor='1', label_pad=0.01)
 
 
 # Plot default data
@@ -68,23 +54,24 @@ y = cortante(x, Ef_0, T_0)
 f_d, = ax.plot(x, y, linewidth=2.5)
 
 # Update values
+
 def update(val):
-    p1 = s_Cortante.val
-    f1 = s_Forca.val
+    p1 = float(s_Cortante.text)
+    f1 = float(s_Forca.text)
     parte1 = cortante(x, p1, f1)
-    p2 = s_Cortante2.val
-    f2 = s_Forca2.val
+    p2 = float(s_Cortante2.text)
+    f2 = float(s_Forca2.text)
     parte2 = cortante(x, p2, f2)
     f_d.set_data(x, cortanteResultante(parte1,parte2))
     fig.canvas.draw_idle()
 
-s_Cortante.on_changed(update)
-s_Forca.on_changed(update)
-s_Cortante2.on_changed(update)
-s_Forca2.on_changed(update)
+s_Cortante.on_submit(update)
+s_Forca.on_submit(update)
+s_Cortante2.on_submit(update)
+s_Forca2.on_submit(update)
     
 # Set axis labels
 ax.set_xlabel('Posição (m)')
 ax.set_ylabel('Força')
 
-plt.show()
+plt.show() 

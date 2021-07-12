@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+Teste.py
+Simples_Old.py
+AnimatedQuiver.py

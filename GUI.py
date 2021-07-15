@@ -41,13 +41,6 @@ def alreadyInList(List, Element):
         if x == Element: 
             return True
     return False
-
-
-def showForces():
-    for i in range(len(forceList)):
-        Label =tk.Label(elementManipulationFrame,text=str(forceList[i]))
-        Label.grid(row=i,column=4)
-        
         
 def addForce(entryOne, entryTwo, entryThree, entryFour):
     global forceList
@@ -80,18 +73,6 @@ def addBeam(entryOne, entryTwo, entryThree, entryFour):
         beamList.append(values)
         diagram.create_line(400+values[0],400-values[1],400+values[2],400-values[3],activewidth=4,fill="blue",width=2)
         root.update()
-    
-    
-def transladar(values):
-    D = values[4]
-    x_1 = values[0]
-    y_1 = values[1]
-    Hip = (x_1**2+y_1**2)**(1/2)
-    
-    x_2 = y_1*D/Hip
-    y_2 = x_1*D/Hip
-    return [x_1,y_1,x_2,y_2]
-    
     
 def addLoad(entryOne, entryTwo, entryThree, entryFour,entryFive):
     global loadList
@@ -414,14 +395,27 @@ def resetAll():
     global loadList
     global reactionList
     global momentumList
+    global resultantes
+    global solver
+    global resultLabel
+    
     forceList = []
     beamList = []
     loadList = []
+    resultantes = []
     reactionList = []
     momentumList = []
     diagram.delete("all")
     diagram.create_line(0,400,800,400,width=5, arrow=tk.LAST)
     diagram.create_line(400,0,400,800,width=5, arrow=tk.FIRST)
+    fig.clf()
+    fig.add_subplot(111)
+    canvas = FigureCanvasTkAgg(fig, master=diagramFrame)
+    canvas.draw()
+    canvas.get_tk_widget().grid(row=0,column=0,columnspan=3)
+    diagramFrame.update()
+    resultLabel.config(text="")   
+    solver.reset()
 
     
     
@@ -432,16 +426,11 @@ def solveAndShow():
     global reactionList
     global momentumList
     global solver
+    global resultLabel
     
-    flag = ''
+    flag = 'H'
     if(len(reactionList)==2):
-        if(beamList[0][0] != beamList[0][2]):
-            flag = 'H'
-            solver = Solver1D(abs(beamList[0][0]-beamList[0][2]),int(100*int(pointsEntry.get())),'fixo-movel')
-        else:
-            flag = 'V'
-            solver = Solver1D(abs(beamList[0][1]-beamList[0][3]),int(100*int(pointsEntry.get())),'fixo-movel')
-        
+        solver = Solver1D(abs(beamList[0][0]-beamList[0][2]),int(100*int(pointsEntry.get())),'fixo-movel')
         for x in forceList:
             if flag =='H':
                 solver.addForca(x[0]-beamList[0][0], x[3])
@@ -462,16 +451,12 @@ def solveAndShow():
         myStr = "Reação Vertical na articulação em ("+str(reactionList[0][0])+",  "+ str(reactionList[0][1])+"): "+str(solver.reacoesApoio()['Rva'])+"N\n"
         myStr += "Reação Hoizontal na articulação em ("+str(reactionList[0][0])+",  "+ str(reactionList[0][1])+"): "+str(solver.reacoesApoio()['Rha'])+"N\n"
         myStr += "Reação Vertical no apoio em ("+str(reactionList[1][0])+",  "+ str(reactionList[1][1])+"): "+str(solver.reacoesApoio()['Rvb'])+"N\n"
-        tk.Label(elementManipulationFrame,text=myStr).grid(row=10,column=0,columnspan=2)
+        resultLabel = tk.Label(elementManipulationFrame,text=myStr)
+        resultLabel.grid(row=10,column=0,columnspan=2)
         diagramaN()
-    elif(len(reactionList)==1):
-        if(beamList[0][0] != beamList[0][2]):
-            flag = 'H'
-            solver = Solver1D(abs(beamList[0][0]-beamList[0][2]),int(100*int(pointsEntry.get())),'engaste')
-        else:
-            flag = 'V'
-            solver = Solver1D(abs(beamList[0][1]-beamList[0][3]),int(100*int(pointsEntry.get())),'engaste')
         
+    elif(len(reactionList)==1):
+        solver = Solver1D(abs(beamList[0][0]-beamList[0][2]),int(100*int(pointsEntry.get())),'engaste')
         for x in forceList:
             if flag =='H':
                 solver.addForca(x[0]-beamList[0][0], x[3])
@@ -492,7 +477,8 @@ def solveAndShow():
         myStr = "Reação Vertical no Engaste em ("+str(reactionList[0][0])+",  "+ str(reactionList[0][1])+"): "+str(solver.reacoesApoio()['Rva'])+"N\n"
         myStr += "Reação Hoizontal no Engaste em ("+str(reactionList[0][0])+",  "+ str(reactionList[0][1])+"): "+str(solver.reacoesApoio()['Rha'])+"N\n"
         myStr += "Reação de momento no Engaste em ("+str(reactionList[0][0])+",  "+ str(reactionList[0][1])+"): "+str(solver.reacoesApoio()['Rma'])+"Nm\n"
-        tk.Label(elementManipulationFrame,text=myStr).grid(row=10,column=0,columnspan=2)
+        resultLabel = tk.Label(elementManipulationFrame,text=myStr)
+        resultLabel.grid(row=10,column=0,columnspan=2)
         diagramaN()
 
 newForceButton = tk.Button(elementManipulationFrame,text="Adicionar Força",height=2,width=23,command=concentratedForceWindow )
@@ -529,6 +515,3 @@ verticalButton.grid(row=1,column=1)
 momentumButton.grid(row=1,column=2)
 
 root.mainloop()
-
-#%%
-p

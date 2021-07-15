@@ -19,13 +19,13 @@ class Funcoes:
                 resultadoTemp = 0
                 for i in this.forcas:
                     if p>=i['posicao']:
-                        resultadoTemp+=i['valor']
+                        resultadoTemp-=i['valor']
                 resultado.append(resultadoTemp)
         else: 
             resultado = 0
             for i in this.forcas:
                 if x>=i['posicao']:
-                    resultado+=i['valor']
+                    resultado-=i['valor']
         return resultado
     
     def integrar(this, x,y):

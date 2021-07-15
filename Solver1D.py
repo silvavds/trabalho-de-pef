@@ -1,3 +1,4 @@
+from operator import concat, pos
 import numpy as np
 import copy
 from matplotlib import pyplot as plt
@@ -11,19 +12,37 @@ class Solver1D:
     cargasDistribuidas = []
     momentos = []
     posicoes = None
+    tipo = None
     tamanhoBarra = 0
     
-    def __init__(this, tamanhoBarra, points=100):
+    def __init__(this, tamanhoBarra, points=100, tipo='fixo-movel'):
         this.tamanhoBarra = tamanhoBarra
         this.posicoes = np.linspace(0,tamanhoBarra,points)
+        this.tipo = tipo
+    
+    def setTipo(this, tipo):
+        this.tipo = tipo
 
     def addForca(this, posicao, valor):
         if posicao>this.tamanhoBarra or posicao<0:
             raise ValueError('Forca fora da barra')
-        this.forcas.append({
-            'posicao': posicao,
-            'valor': valor
-        })
+
+        if posicao==0:
+            posicao+=2/len(this.posicoes)
+        if posicao==this.tamanhoBarra:
+            posicao-=20/len(this.posicoes)
+
+        updated = False
+        for i in this.forcas:
+            if i['posicao']==posicao:
+                i['valor']+=valor
+                updated = True
+
+        if not updated:
+            this.forcas.append({
+                'posicao': posicao,
+                'valor': valor
+            })
 
     def addForcaHorizontal(this, valor):
         this.forcasHorizontais.append(valor)
@@ -48,6 +67,18 @@ class Solver1D:
     def getCarga(this):
         concentradas = copy.deepcopy(this.forcas)
         distribuidas = copy.deepcopy(this.cargasDistribuidas)
+        reacoes = this.reacoesApoio()
+        for k in list(reacoes.keys()):
+            if k=='Rva':
+                concentradas.append({
+                    'posicao': 0,
+                    'valor': reacoes['Rva']
+                })
+            if k=='Rvb':
+                concentradas.append({
+                    'posicao': this.tamanhoBarra,
+                    'valor': reacoes['Rvb']
+                })
         pos = this.posicoes
         for f in concentradas:
             f['aplicada'] = False
@@ -66,6 +97,12 @@ class Solver1D:
     
     def getMomentos(this):
         moms = copy.deepcopy(this.momentos)
+        reacoes = this.reacoesApoio()
+        if 'Rma' in list(reacoes.keys()):
+            moms.append({
+                'posicao': 0,
+                'valor': reacoes['Rma']
+            })
         pos = this.posicoes
         for f in moms:
             f['aplicado'] = False
@@ -77,12 +114,17 @@ class Solver1D:
                     cargaMomento[i] += f['valor']
         return cargaMomento
 
+    def getN(this):
+        return np.zeros(len(this.posicoes))
+
     def getV(this, carga=None, cargaConcentradaPosicoes=None):
         if carga==None:
             carga, cargaConcentradaPosicoes = this.getCarga()
         pos = this.posicoes
         vetorCortante = np.zeros(len(pos))
         currentCortante = 0
+        if cargaConcentradaPosicoes[0] != 0:
+            currentCortante+= cargaConcentradaPosicoes[0]
         for i in range(1, len(pos)):
             if cargaConcentradaPosicoes[i] != 0:
                 currentCortante+= cargaConcentradaPosicoes[i]
@@ -98,6 +140,7 @@ class Solver1D:
         vetorMomento = np.zeros(len(pos))
         currentMomento = 0
         momentosConcentrados = this.getMomentos()
+        currentMomento += momentosConcentrados[0]
         for i in range(1, len(pos)):
             currentMomento += (0.5*(pos[i]-pos[i-1])*(cortantes[i-1]+cortantes[i]))
             currentMomento += momentosConcentrados[i]
@@ -105,32 +148,59 @@ class Solver1D:
         return vetorMomento
 
     def reacoesApoio(this):
-        somatorio = 0
-        forc = copy.deepcopy(this.forcas)
-        for c in this.cargasDistribuidas:
-            nova = {
-                'posicao': (c['fim']-c['comeco'])/2,
-                'valor': (c['fim']-c['comeco'])*c['valor']
+        if this.tipo == 'fixo-movel':
+            somatorio = 0
+            forc = copy.deepcopy(this.forcas)
+            for c in this.cargasDistribuidas:
+                nova = {
+                    'posicao': (c['fim']+c['comeco'])/2,
+                    'valor': (c['fim']-c['comeco'])*c['valor']
+                }
+                forc.append(nova)
+            for i in forc:
+                somatorio+=i['posicao']*i['valor']
+            momentoResultante = 0
+            for i in this.momentos:
+                momentoResultante+=i['valor']
+            Rvb = (-somatorio-momentoResultante)/this.tamanhoBarra
+            somaSimples = 0
+            for i in forc:
+                somaSimples+=i['valor']
+            Rva = -Rvb-somaSimples
+            Rha = 0
+            for a in this.forcasHorizontais:
+                Rha -= a
+            return {
+                'Rva': Rva,
+                'Rha': Rha,
+                'Rvb': Rvb
             }
-            forc.append(nova)
-        for i in forc:
-            somatorio+=i['posicao']*i['valor']
-        momentoResultante = 0
-        for i in this.momentos:
-            momentoResultante+=i['valor']
-        Rvb = (-somatorio-momentoResultante)/this.tamanhoBarra
-        somaSimples = 0
-        for i in forc:
-            somaSimples+=i['valor']
-        Rva = -Rvb-somaSimples
-        Rha = 0
-        for a in this.forcasHorizontais:
-            Rha -= a
-        return {
-            'Rva': Rva,
-            'Rha': Rha,
-            'Rvb': Rvb
-        }
+        if this.tipo=='engaste':
+            forc = copy.deepcopy(this.forcas)
+            for c in this.cargasDistribuidas:
+                nova = {
+                    'posicao': (c['fim']+c['comeco'])/2,
+                    'valor': (c['fim']-c['comeco'])*c['valor']
+                }
+                forc.append(nova)
+            mom = copy.deepcopy(this.momentos)
+            forcHor = copy.deepcopy(this.forcasHorizontais)
+            reacaoVertical = 0
+            reacaoHorizontal = 0
+            reacaoMomento = 0
+            for f in forcHor:
+                reacaoHorizontal-=f
+            for f in forc:
+                reacaoVertical-=f['valor']
+            for m in mom:
+                reacaoMomento-=m['valor']
+            for f in forc:
+                reacaoMomento-=f['valor']*f['posicao']
+            return {
+                'Rha': reacaoHorizontal,
+                'Rva': reacaoVertical,
+                'Rma': reacaoMomento
+            }
     
     def plotCarga(this, carga=None):
         if carga==None:
@@ -143,6 +213,17 @@ class Solver1D:
         plt.title('Plot de carga em função da posição')
         plt.show()
     
+    def plotNormal(this, normal=None):
+        if normal==None:
+            normal = this.getN()
+        plt.figure()
+        plt.plot(this.posicoes, normal, color='red')
+        plt.fill_between(this.posicoes,normal, color='red', alpha=0.30)
+        plt.xlabel('Posição (m)')
+        plt.ylabel('Normal (N)')
+        plt.title('Plot de normal em função da posição')
+        plt.show()
+
     def plotCortante(this, cortante=None):
         if cortante==None:
             cortante = this.getV()

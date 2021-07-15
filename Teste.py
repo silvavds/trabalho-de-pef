@@ -7,11 +7,8 @@ solver.addCargaDistribuida(4,6,8)
 solver.addCargaDistribuida(6,8,10)
 solver.addForcaHorizontal(50)
 
-solver.addForca(0,10)
-solver.addForca(10,10)
-
 solver.addForca(2,10)
-solver.addForca(2,-10)
+solver.addForca(4,-10)
 solver.addMomento(7,10)
 
 print(solver.reacoesApoio())

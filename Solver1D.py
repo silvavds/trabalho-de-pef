@@ -210,7 +210,10 @@ class Solver1D:
         plt.fill_between(this.posicoes,carga, alpha=0.30)
         plt.xlabel('Posição (m)')
         plt.ylabel('Carga (N)')
-        plt.title('Plot de carga em função da posição')
+        if this.tipo=='engaste':
+            plt.title('Plot de carga em função da posição para apoio engastado')
+        else:
+            plt.title('Plot de carga em função da posição para apoio fixo e móvel')
         plt.show()
     
     def plotNormal(this, normal=None):
@@ -221,7 +224,10 @@ class Solver1D:
         plt.fill_between(this.posicoes,normal, color='red', alpha=0.30)
         plt.xlabel('Posição (m)')
         plt.ylabel('Normal (N)')
-        plt.title('Plot de normal em função da posição')
+        if this.tipo=='engaste':
+            plt.title('Plot de normal em função da posição para apoio engastado')
+        else:
+            plt.title('Plot de normal em função da posição para apoio fixo e móvel')
         plt.show()
 
     def plotCortante(this, cortante=None):
@@ -232,7 +238,10 @@ class Solver1D:
         plt.fill_between(this.posicoes,cortante, color='green', alpha=0.30)
         plt.xlabel('Posição (m)')
         plt.ylabel('Cortante (N)')
-        plt.title('Plot de cortante em função da posição')
+        if this.tipo=='engaste':
+            plt.title('Plot de cortante em função da posição para apoio engastado')
+        else:
+            plt.title('Plot de cortante em função da posição para apoio fixo e móvel')
         plt.show()
 
     def plotMomentos(this, momentos=None):
@@ -243,5 +252,8 @@ class Solver1D:
         plt.fill_between(this.posicoes,momentos, color='orange', alpha=0.30)
         plt.xlabel('Posição (m)')
         plt.ylabel('Momento (N.m)')
-        plt.title('Plot de momento em função da posição')
+        if this.tipo=='engaste':
+            plt.title('Plot de momento em função da posição para apoio engastado')
+        else:
+            plt.title('Plot de momento em função da posição para apoio fixo e móvel')
         plt.show()

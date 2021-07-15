@@ -146,6 +146,9 @@ class Solver1D:
             currentMomento += momentosConcentrados[i]
             vetorMomento[i] = currentMomento
         return vetorMomento
+    
+    def getPosicoes(this):
+        return this.posicoes
 
     def reacoesApoio(this):
         if this.tipo == 'fixo-movel':

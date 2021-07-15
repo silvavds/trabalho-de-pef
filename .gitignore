@@ -128,6 +128,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-Teste.py
+#Teste.py
 Simples_Old.py
 AnimatedQuiver.py
